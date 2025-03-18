@@ -1,0 +1,87 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: memberdb
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:latest
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"  # AMQP port
+      - "15672:15672"  # Management UI port
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+
+  classservice:
+    build:
+      context: ./ClassService
+      dockerfile: Dockerfile
+    ports:
+      - "5041:80"
+    depends_on:
+      - postgres
+      - rabbitmq
+    environment:
+      ConnectionStrings__PostgreSQL: "Host=postgres;Database=classdb;Username=postgres;Password=postgres"
+      RabbitMQ__HostName: "rabbitmq"
+
+  memberservice:
+    build:
+      context: ./MemberService
+      dockerfile: Dockerfile
+    ports:
+      - "5062:80"
+    depends_on:
+      - postgres
+      - rabbitmq
+    environment:
+      ConnectionStrings__PostgreSQL: "Host=postgres;Database=memberdb;Username=postgres;Password=postgres"
+      RabbitMQ__HostName: "rabbitmq"
+
+  personalservice:
+    build:
+      context: ./PersonalService
+      dockerfile: Dockerfile
+    ports:
+      - "5104:80"
+    depends_on:
+      - postgres
+      - rabbitmq
+    environment:
+      ConnectionStrings__PostgreSQL: "Host=postgres;Database=personaldb;Username=postgres;Password=postgres"
+      RabbitMQ__HostName: "rabbitmq"
+
+  paymentservice:
+    build:
+      context: ./PaymentService
+      dockerfile: Dockerfile
+    ports:
+      - "5019:80"
+    depends_on:
+      - postgres
+      - redis
+      - rabbitmq
+    environment:
+      ConnectionStrings__PostgreSQL: "Host=postgres;Database=paymentdb;Username=postgres;Password=postgres"
+      ConnectionStrings__Redis: "redis:6379"
+      RabbitMQ__HostName: "rabbitmq"
+
+volumes:
+  postgres_data:
+  redis_data: 

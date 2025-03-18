@@ -1,0 +1,6 @@
+@PersonalService_HostAddress = http://localhost:5104
+
+GET {{PersonalService_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
